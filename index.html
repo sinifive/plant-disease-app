@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlantDoc - Plant Disease Classifier</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #8BC34A;
+            --accent-color: #FF9800;
+            --light-color: #F1F8E9;
+            --dark-color: #33691E;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-color);
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px 0;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            font-size: 2.5rem;
+        }
+        
+        .logo-text {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        main {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .upload-section {
+            background-color: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .upload-title {
+            margin-bottom: 20px;
+            color: var(--dark-color);
+        }
+        
+        .upload-area {
+            border: 3px dashed var(--secondary-color);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            background-color: rgba(139, 195, 74, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        .upload-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .upload-btn:hover {
+            background-color: var(--dark-color);
+            transform: translateY(-2px);
+        }
+        
+        .result-section {
+            background-color: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .result-title {
+            color: var(--dark-color);
+        }
+        
+        .result-content {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .result-image {
+            width: 40%;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .result-details {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .disease-name {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .confidence {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .confidence-bar {
+            flex-grow: 1;
+            height: 20px;
+            background-color: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .confidence-level {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            border-radius: 10px;
+        }
+        
+        .info-card {
+            background-color: rgba(139, 195, 74, 0.1);
+            border-left: 5px solid var(--secondary-color);
+            padding: 15px;
+            border-radius: 5px;
+        }
+        
+        .treatment-list {
+            list-style-type: none;
+        }
+        
+        .treatment-list li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .treatment-list li:before {
+            content: "✓";
+            color: var(--primary-color);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(75, 175, 80, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            padding: 20px 0;
+        }
+        
+        @media screen and (max-width: 768px) {
+            .result-content {
+                flex-direction: column;
+            }
+            
+            .result-image, .result-details {
+                width: 100%;
+            }
+        }
+
+        .error-message {
+            background-color: #ffebee;
+            border-left: 5px solid #f44336;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .api-selector {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <span class="logo-icon">🌿</span>
+                <span class="logo-text">PlantDoc</span>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <main>
+            <section class="upload-section">
+                <h2 class="upload-title">Upload a Plant Image to Detect Disease</h2>
+                <div class="upload-area" id="drop-area">
+                    <div class="upload-icon">📷</div>
+                    <p>Drag and drop an image here or click to select</p>
+                    <p><small>Supported formats: JPG, PNG, WebP</small></p>
+                </div>
+                <input type="file" id="file-input" accept="image/*">
+                <button class="upload-btn" id="upload-button">Diagnose Plant</button>
+                <div class="api-selector">
+                    <p><small>API URL:</small></p>
+                    <select id="api-endpoint">
+                        <option value="http://127.0.0.1:5000">localhost (127.0.0.1:5000)</option>
+                        <option value="http://192.168.0.107:5000">Network IP (192.168.0.107:5000)</option>
+                    </select>
+                </div>
+                <div class="error-message" id="error-message">
+                    <p>There was an error processing your request. Please try again.</p>
+                </div>
+            </section>
+            
+            <div class="loading" id="loading-section">
+                <div class="spinner"></div>
+                <p>Analyzing your plant image...</p>
+                <p><small>This may take a few moments</small></p>
+            </div>
+            
+            <section class="result-section" id="result-section">
+                <div class="result-header">
+                    <h2 class="result-title">Disease Detection Results</h2>
+                    <button class="upload-btn" id="new-diagnosis">New Diagnosis</button>
+                </div>
+                <div class="result-content">
+                    <div class="result-image">
+                        <img id="result-img" src="#" alt="Plant Image">
+                    </div>
+                    <div class="result-details">
+                        <div>
+                            <h3 class="disease-name">Loading result...</h3>
+                            <div class="confidence">
+                                <span>Confidence:</span>
+                                <div class="confidence-bar">
+                                    <div class="confidence-level" style="width: 0%"></div>
+                                </div>
+                                <span>0%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-card">
+                            <h4>About This Disease</h4>
+                            <p>Loading disease information...</p>
+                        </div>
+                        
+                        <div>
+                            <h4>Recommended Treatment</h4>
+                            <ul class="treatment-list">
+                                <li>Loading treatments...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>PlantDoc - Your Plant Healthcare Assistant</p>
+        </footer>
+    </div>
+    
+    <script>
+        // DOM Elements
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const uploadButton = document.getElementById('upload-button');
+        const loadingSection = document.getElementById('loading-section');
+        const resultSection = document.getElementById('result-section');
+        const newDiagnosisButton = document.getElementById('new-diagnosis');
+        const resultImg = document.getElementById('result-img');
+        const errorMessage = document.getElementById('error-message');
+        const apiEndpoint = document.getElementById('api-endpoint');
+        
+        // Event Listeners
+        dropArea.addEventListener('click', () => fileInput.click());
+        
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = '#4CAF50';
+            dropArea.style.backgroundColor = 'rgba(139, 195, 74, 0.2)';
+        });
+        
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.style.borderColor = '#8BC34A';
+            dropArea.style.backgroundColor = 'transparent';
+        });
+        
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = '#8BC34A';
+            dropArea.style.backgroundColor = 'transparent';
+            
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                handleFile(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                handleFile(fileInput.files[0]);
+            }
+        });
+        
+        uploadButton.addEventListener('click', () => {
+            if (fileInput.files.length) {
+                processImage();
+            } else {
+                fileInput.click();
+            }
+        });
+        
+        newDiagnosisButton.addEventListener('click', () => {
+            resultSection.style.display = 'none';
+            fileInput.value = '';
+            uploadButton.textContent = 'Diagnose Plant';
+            dropArea.innerHTML = `
+                <div class="upload-icon">📷</div>
+                <p>Drag and drop an image here or click to select</p>
+                <p><small>Supported formats: JPG, PNG, WebP</small></p>
+            `;
+        });
+        
+        // Functions
+        function handleFile(file) {
+            if (file.type.startsWith('image/')) {
+                errorMessage.style.display = 'none';
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    dropArea.innerHTML = `
+                        <div class="upload-icon">✓</div>
+                        <p>Image selected: ${file.name}</p>
+                        <img src="${e.target.result}" alt="Selected plant" style="max-height: 150px; margin-top: 10px;">
+                    `;
+                    uploadButton.textContent = 'Analyze Disease';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function processImage() {
+            // Hide any previous error messages
+            errorMessage.style.display = 'none';
+            
+            // Show loading state
+            loadingSection.style.display = 'block';
+            uploadButton.disabled = true;
+            
+            // Get selected API endpoint
+            const selectedApiUrl = apiEndpoint.value;
+            
+            // Create form data to send the image
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            
+            // Send to backend API
+            fetch(`${selectedApiUrl}/predict`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Hide loading
+                loadingSection.style.display = 'none';
+                
+                // Display image preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    resultImg.src = e.target.result;
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+                
+                // Update the results with the prediction data
+                document.querySelector('.disease-name').textContent = data.disease || 'Unknown Disease';
+                
+                // Update confidence bar
+                const confidence = data.confidence || 0;
+                const confidenceLevel = document.querySelector('.confidence-level');
+                confidenceLevel.style.width = `${confidence}%`;
+                document.querySelector('.confidence span:last-child').textContent = `${confidence.toFixed(1)}%`;
+                
+                // Update disease info
+                const infoCard = document.querySelector('.info-card');
+                infoCard.innerHTML = `
+                    <h4>About This Disease</h4>
+                    <p>${data.description || 'No description available'}</p>
+                `;
+                
+                // Update treatments
+                const treatmentList = document.querySelector('.treatment-list');
+                treatmentList.innerHTML = '';
+                
+                if (data.treatments && data.treatments.length > 0) {
+                    data.treatments.forEach(treatment => {
+                        const li = document.createElement('li');
+                        li.textContent = treatment;
+                        treatmentList.appendChild(li);
+                    });
+                } else {
+                    const li = document.createElement('li');
+                    li.textContent = 'No specific treatments available';
+                    treatmentList.appendChild(li);
+                }
+                
+                // Show results
+                resultSection.style.display = 'block';
+                uploadButton.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingSection.style.display = 'none';
+                uploadButton.disabled = false;
+                errorMessage.style.display = 'block';
+                errorMessage.innerHTML = `
+                    <p>Error: ${error.message}</p>
+                    <p>Make sure your API server is running at ${selectedApiUrl}/predict and accepts POST requests.</p>
+                    <p>Check your browser console for more details.</p>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
